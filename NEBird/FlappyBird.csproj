@@ -1,0 +1,104 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0E3C38BF-4159-42E2-9EA1-F8C82F42C3EA}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>FlappyBird</RootNamespace>
+    <AssemblyName>FlappyBird</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Game.cs" />
+    <Compile Include="Objects\Background.cs" />
+    <Compile Include="Objects\Ground.cs" />
+    <Compile Include="Objects\Pipe.cs" />
+    <Compile Include="Objects\Player.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resources.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="sprites\0.jpg" />
+    <Content Include="sprites\1.jpg" />
+    <Content Include="sprites\2.jpg" />
+    <Content Include="sprites\3.jpg" />
+    <Content Include="sprites\4.jpg" />
+    <Content Include="sprites\5.jpg" />
+    <Content Include="sprites\6.jpg" />
+    <Content Include="sprites\7.jpg" />
+    <Content Include="sprites\8.jpg" />
+    <Content Include="sprites\9.jpg" />
+    <Content Include="sprites\background-day.jpg" />
+    <Content Include="sprites\background-night.jpg" />
+    <Content Include="sprites\base.jpg" />
+    <Content Include="sprites\bluebird-downflap.jpg" />
+    <Content Include="sprites\bluebird-midflap.jpg" />
+    <Content Include="sprites\bluebird-upflap.jpg" />
+    <Content Include="sprites\gameover.jpg" />
+    <Content Include="sprites\message.jpg" />
+    <Content Include="sprites\pipe-green.jpg" />
+    <Content Include="sprites\pipe-red.jpg" />
+    <Content Include="sprites\redbird-downflap.jpg" />
+    <Content Include="sprites\redbird-midflap.jpg" />
+    <Content Include="sprites\redbird-upflap.jpg" />
+    <Content Include="sprites\yellowbird-downflap.jpg" />
+    <Content Include="sprites\yellowbird-midflap.jpg" />
+    <Content Include="sprites\yellowbird-upflap.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\mllib\MLLib\MLLib.csproj">
+      <Project>{f3a99d22-8ef0-4156-8300-7c903d407d4e}</Project>
+      <Name>MLLib</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\mllib\WindowHandler\WindowHandler.csproj">
+      <Project>{a170af94-dd8f-4726-b218-debecbfc703b}</Project>
+      <Name>WindowHandler</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="OpenTK.dll.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="OpenTK, Version=3.1.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4">
+      <HintPath>..\packages\OpenTK.3.1.0\lib\net20\OpenTK.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+</Project>

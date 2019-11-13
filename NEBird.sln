@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlappyBird", "NEBird\FlappyBird.csproj", "{0E3C38BF-4159-42E2-9EA1-F8C82F42C3EA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MLLIB", "MLLIB", "{D78E0CCA-B41C-4E1D-9B23-73509DDC2905}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowHandler", "mllib\WindowHandler\WindowHandler.csproj", "{A170AF94-DD8F-4726-B218-DEBECBFC703B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLLib", "mllib\MLLib\MLLib.csproj", "{F3A99D22-8EF0-4156-8300-7C903D407D4E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0E3C38BF-4159-42E2-9EA1-F8C82F42C3EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E3C38BF-4159-42E2-9EA1-F8C82F42C3EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E3C38BF-4159-42E2-9EA1-F8C82F42C3EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E3C38BF-4159-42E2-9EA1-F8C82F42C3EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A170AF94-DD8F-4726-B218-DEBECBFC703B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A170AF94-DD8F-4726-B218-DEBECBFC703B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A170AF94-DD8F-4726-B218-DEBECBFC703B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A170AF94-DD8F-4726-B218-DEBECBFC703B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3A99D22-8EF0-4156-8300-7C903D407D4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3A99D22-8EF0-4156-8300-7C903D407D4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3A99D22-8EF0-4156-8300-7C903D407D4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3A99D22-8EF0-4156-8300-7C903D407D4E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A170AF94-DD8F-4726-B218-DEBECBFC703B} = {D78E0CCA-B41C-4E1D-9B23-73509DDC2905}
+		{F3A99D22-8EF0-4156-8300-7C903D407D4E} = {D78E0CCA-B41C-4E1D-9B23-73509DDC2905}
+	EndGlobalSection
+EndGlobal
