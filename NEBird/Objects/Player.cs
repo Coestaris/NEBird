@@ -15,13 +15,15 @@ namespace FlappyBird.Objects
         public double Angle;
 
         public double[] Inputs;
+        public double Fitness;
     }
 
     public class Player : DrawableObject, ICreature
     {
+        public static Random Random;
+
         public RectangleF Rectangle;
         public double Rotation;
-        public Random Random;
 
         private Texture[] _playerTextures;
         private List<State> _state;
@@ -29,6 +31,7 @@ namespace FlappyBird.Objects
         private double _fitness;
         private double _speed;
         private int _textureCounter;
+        private int _randomSeed;
         private double _rotVel;
         private double _yVel;
 
@@ -59,9 +62,8 @@ namespace FlappyBird.Objects
 
         public NeuralNetwork NeuralNetwork;
 
-        public Player(Texture[] playerTextures, double speed, Game game, int randomSeed, NeuralNetwork neuralNetwork) : base(Vector2.Zero)
+        public Player(Texture[] playerTextures, double speed, Game game, NeuralNetwork neuralNetwork) : base(Vector2.Zero)
         {
-            Random = new Random(randomSeed);
             _game = game;
             _localGround = new Ground(null, speed, game);
             _localPipes = new List<Pipe>();
@@ -96,6 +98,8 @@ namespace FlappyBird.Objects
 
         public void Reset()
         {
+            Random = new Random(1);
+
             _localPipes.Clear();
             Position = _startPos;
             _fitness = 0;
@@ -120,8 +124,7 @@ namespace FlappyBird.Objects
                     _game.Resources.Pipes[0],
                     -_speed,
                     new Vector2(_game.Window.Width + _game.Resources.Pipes[0].Size.Width, 0),
-                    _game,
-                    Random));
+                    _game));
             }
 
             foreach (var pipe in _localPipes)
@@ -146,8 +149,6 @@ namespace FlappyBird.Objects
             //== PROCESSING POSITION AND ROTATION ==
             if (_yVel > MaxYVel && !_flapped)
                 _yVel += YAcc;
-
-            if((time % (25 + (new Random()).Next(2))) == 0) Flap();
             Position.Y -= (float)_yVel;
             if (Rotation < RotMax)
             {
@@ -167,7 +168,8 @@ namespace FlappyBird.Objects
                 _state.Add(new State
                 {
                     Angle = Rotation, X = Position.X, Y = Position.Y,
-                    Inputs = input
+                    Inputs = input,
+                    Fitness = _fitness
                 });
 
             //== CHECKING COLLISIONS ==
@@ -185,6 +187,16 @@ namespace FlappyBird.Objects
         public double GetFitness()
         {
             return _fitness;
+        }
+
+        public ICreature CreatureChild()
+        {
+            return new Player(_playerTextures, _speed, _game, (NeuralNetwork)NeuralNetwork.Clone());
+        }
+
+        public void Update(Genome genome)
+        {
+            NeuralNetwork = NeuroEvolution.GenomeToNN(NeuralNetwork, genome);
         }
     }
 }
