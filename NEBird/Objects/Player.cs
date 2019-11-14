@@ -1,22 +1,46 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using MLLib.AI.GA;
 using OpenTK;
 using MLLib.WindowHandler;
 
 namespace FlappyBird.Objects
 {
-    public class Player : DrawableObject
+    public struct State
     {
+        public double X, Y;
+        public double Angle;
+    }
+
+    public class Player : DrawableObject, ICreature
+    {
+        public RectangleF Rectangle;
+        public double Rotation;
+        public Random Random;
+
         private Texture[] _playerTextures;
+        private List<State> _state;
 
-        private int _textureCounter = 0;
-        private int _frameCounter = 0;
+        private double _fitness;
+        private double _speed;
+        private int _textureCounter;
+        private double _rotVel;
+        private double _yVel;
 
-        private double _rot     = 45;
-        private double _rotVel  = 3;
-        private double _yVel    = 9;
+        private Ground _localGround;
+        private List<Pipe> _localPipes;
+        private Game _game;
 
-        private bool   _flapped = false;
+        private readonly Vector2 _startPos = new Vector2(200, 400);
+
+        public const int PipeFreq = 120;
+        public const int SaveState = 1;
+
+        private const double StartRot = 45;
+        private const double StartRotVel = 3;
+        private const double StartYVel = 9;
+        private bool _flapped = false;
 
         private const double MaxYVel    = -12;
         private const double YAcc       =  -1;
@@ -29,37 +53,89 @@ namespace FlappyBird.Objects
         private const double RotMax     =  35;
         private const int AnimationSpeed =  4;
 
-        public RectangleF Rectangle;
-
-        public int Score;
-        public double Fitness;
-
-        public double Speed;
-
-        public Player(Texture[] playerTextures, double speed) : base(new Vector2(200, 400))
+        public Player(Texture[] playerTextures, double speed, Game game, int randomSeed) : base(Vector2.Zero)
         {
+            Random = new Random(randomSeed);
+            _game = game;
+            _localGround = new Ground(null, speed, game);
+            _localPipes = new List<Pipe>();
+
+            _state = new List<State>();
             _playerTextures = playerTextures;
-            Speed = speed;
-            Flap();
+            _speed = speed;
+
+            Reset();
         }
 
-        public override void Update()
+        public override void Update() { }
+
+        public override void Draw()
         {
+            DrawTexture(
+                _playerTextures[_textureCounter],
+                Position.X,
+                Position.Y,
+                1,
+                1,
+                Rotation < MinRotVel ? MinRotVel : Rotation);
+        }
+
+        public void Flap()
+        {
+            _yVel = FlapYVel;
+            Rotation -= 0.001;
+            _rotVel = FLapRotVel;
+        }
+
+        public void Reset()
+        {
+            _localPipes.Clear();
+            Position = _startPos;
+            _fitness = 0;
+            _state.Clear();
+
+            Rotation = StartRot;
+            _rotVel = StartRotVel;
+            _yVel = StartYVel;
+        }
+
+        public object GetState()
+        {
+            return _state.ToArray();
+        }
+
+        public bool Step(int time)
+        {
+            if (time % PipeFreq == 0)
+            {
+                _localPipes.Add(new Pipe(
+                    _game.Resources.Pipes[0],
+                    -_speed,
+                    new Vector2(_game.Window.Width + _game.Resources.Pipes[0].Size.Width, 0),
+                    _game,
+                    Random));
+            }
+
+            foreach (var pipe in _localPipes)
+                pipe.ManualUpdate();
+
             if (_yVel > MaxYVel && !_flapped)
                 _yVel += YAcc;
 
+            if((time % (25 + (new Random()).Next(2))) == 0) Flap();
+
             Position.Y -= (float)_yVel;
 
-            if (_rot < RotMax)
+            if (Rotation < RotMax)
             {
                 _rotVel += RotAcc;
-                _rot += _rotVel;
+                Rotation += _rotVel;
             }
 
-            if (_rot > RotMax) _rot = RotMax;
+            if (Rotation > RotMax) Rotation = RotMax;
 
-            _frameCounter++;
-            if (_frameCounter % AnimationSpeed == 0)
+            time++;
+            if (time % AnimationSpeed == 0)
             {
                 _textureCounter = (_textureCounter + 1) % _playerTextures.Length;
                 _flapped = !_flapped;
@@ -71,28 +147,26 @@ namespace FlappyBird.Objects
                     Position.Y - _playerTextures[0].Size.Height / 2.0f),
                 _playerTextures[0].Size);
 
-            Fitness += Speed;
+            _fitness += _speed;
+
+            if ((int) time % SaveState == 0)
+                _state.Add(new State {Angle = Rotation, X = Position.X, Y = Position.Y});
+
+            var collided = false;
+            foreach (var pipe in _localPipes)
+                if (pipe.CheckCollision(this))
+                {
+                    collided = true;
+                    break;
+                }
+            collided |= _localGround.CheckCollision(this);
+
+            return !collided;
         }
 
-        public override void Draw()
+        public double GetFitness()
         {
-            DrawTexture(
-                _playerTextures[_textureCounter],
-                Position.X,
-                Position.Y,
-                1,
-                1,
-                _rot < MinRotVel ? MinRotVel : _rot);
-
-            //Pipe.DrawRectangle(Rectangle, Color.Chocolate);
-        }
-
-        public void Flap()
-        {
-            _yVel = FlapYVel;
-
-            _rot -= 0.001;
-            _rotVel = FLapRotVel;
+            return _fitness;
         }
     }
 }

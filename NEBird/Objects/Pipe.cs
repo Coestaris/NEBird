@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using MLLib.AIMath;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using MLLib.WindowHandler;
@@ -9,8 +8,6 @@ namespace FlappyBird.Objects
 {
     public class Pipe : DrawableObject
     {
-        private static Random _random = new Random();
-
         private Texture _texture;
         private double _speed;
 
@@ -18,35 +15,40 @@ namespace FlappyBird.Objects
         private double _yOffset;
 
         private const float PipeWidth = 120;
+        private Game _game;
 
         public RectangleF Rectangle1;
         public RectangleF Rectangle2;
 
-        public Pipe(Texture texture, double speed, Vector2 position) : base(position)
+        public Pipe(Texture texture, double speed, Vector2 position, Game game, Random random) : base(position)
         {
             _texture = texture;
             _speed = speed;
+            _game = game;
 
-            _yOffset = _random.Next(-10, 140);
+            _yOffset = random.Next(-10, 140);
             _x = position.X;
         }
 
         public override void Update()
         {
-            _x += (float)_speed;
             if (_x < -_texture.Size.Width)
                 Destroy();
+        }
+
+        public void ManualUpdate()
+        {
+            _x += (float)_speed;
 
             Rectangle1.X = (float) _x - _texture.Size.Width / 2.0f;
             Rectangle1.Y = 0;
             Rectangle1.Width = _texture.Size.Width;
-            Rectangle1.Height = Parent.Height / 2.0f - (float) _yOffset - PipeWidth;
+            Rectangle1.Height = _game.Window.Height / 2.0f - (float) _yOffset - PipeWidth;
 
             Rectangle2.X = (float) _x - _texture.Size.Width / 2.0f;
-            Rectangle2.Y = Parent.Height / 2.0f - (float) _yOffset + PipeWidth;
+            Rectangle2.Y = _game.Window.Height / 2.0f - (float) _yOffset + PipeWidth;
             Rectangle2.Width = _texture.Size.Width;
-            Rectangle2.Height = Parent.Height / 2.0f;
-
+            Rectangle2.Height = _game.Window.Height / 2.0f;
         }
 
         internal static void DrawRectangle(RectangleF rectangle, Color color)
