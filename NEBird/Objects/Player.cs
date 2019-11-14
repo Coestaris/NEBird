@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using MLLib.AI.GA;
+using MLLib.AI.OBNN;
 using OpenTK;
 using MLLib.WindowHandler;
 
@@ -11,6 +13,8 @@ namespace FlappyBird.Objects
     {
         public double X, Y;
         public double Angle;
+
+        public double[] Inputs;
     }
 
     public class Player : DrawableObject, ICreature
@@ -53,7 +57,9 @@ namespace FlappyBird.Objects
         private const double RotMax     =  35;
         private const int AnimationSpeed =  4;
 
-        public Player(Texture[] playerTextures, double speed, Game game, int randomSeed) : base(Vector2.Zero)
+        public NeuralNetwork NeuralNetwork;
+
+        public Player(Texture[] playerTextures, double speed, Game game, int randomSeed, NeuralNetwork neuralNetwork) : base(Vector2.Zero)
         {
             Random = new Random(randomSeed);
             _game = game;
@@ -63,6 +69,7 @@ namespace FlappyBird.Objects
             _state = new List<State>();
             _playerTextures = playerTextures;
             _speed = speed;
+            NeuralNetwork = neuralNetwork;
 
             Reset();
         }
@@ -106,6 +113,7 @@ namespace FlappyBird.Objects
 
         public bool Step(int time)
         {
+            //== CREATING PIPE ==
             if (time % PipeFreq == 0)
             {
                 _localPipes.Add(new Pipe(
@@ -119,39 +127,50 @@ namespace FlappyBird.Objects
             foreach (var pipe in _localPipes)
                 pipe.ManualUpdate();
 
+            //== THINKING ==
+            var nearestPipe = _localPipes
+                .OrderByDescending(p => p.GetNormalizedDistance(this))
+                .ToList()[0];
+
+            var input = new[]
+            {
+                nearestPipe.GetNormalizedDistance(this),
+                _localGround.GetNormalizedHeight(this),
+                nearestPipe.GetNormalizeHeight()
+            };
+
+            var output = NeuralNetwork.ForwardPass(input);
+            if(output[0] > .5)
+                Flap();
+
+            //== PROCESSING POSITION AND ROTATION ==
             if (_yVel > MaxYVel && !_flapped)
                 _yVel += YAcc;
 
             if((time % (25 + (new Random()).Next(2))) == 0) Flap();
-
             Position.Y -= (float)_yVel;
-
             if (Rotation < RotMax)
             {
                 _rotVel += RotAcc;
                 Rotation += _rotVel;
             }
-
             if (Rotation > RotMax) Rotation = RotMax;
-
-            time++;
-            if (time % AnimationSpeed == 0)
-            {
-                _textureCounter = (_textureCounter + 1) % _playerTextures.Length;
-                _flapped = !_flapped;
-            }
-
             Rectangle = new RectangleF(
                 new PointF(
                     Position.X - _playerTextures[0].Size.Width / 2.0f,
                     Position.Y - _playerTextures[0].Size.Height / 2.0f),
                 _playerTextures[0].Size);
-
             _fitness += _speed;
 
-            if ((int) time % SaveState == 0)
-                _state.Add(new State {Angle = Rotation, X = Position.X, Y = Position.Y});
+            //== SAVING STATE ==
+            if (time % SaveState == 0)
+                _state.Add(new State
+                {
+                    Angle = Rotation, X = Position.X, Y = Position.Y,
+                    Inputs = input
+                });
 
+            //== CHECKING COLLISIONS ==
             var collided = false;
             foreach (var pipe in _localPipes)
                 if (pipe.CheckCollision(this))
@@ -160,7 +179,6 @@ namespace FlappyBird.Objects
                     break;
                 }
             collided |= _localGround.CheckCollision(this);
-
             return !collided;
         }
 

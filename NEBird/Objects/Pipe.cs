@@ -99,5 +99,15 @@ namespace FlappyBird.Objects
         {
             return Rectangle1.IntersectsWith(player.Rectangle) || Rectangle2.IntersectsWith(player.Rectangle);
         }
+
+        public double GetNormalizedDistance(Player player)
+        {
+            return (Rectangle1.Right - player.Rectangle.Right) / _game.Window.Width;
+        }
+
+        public double GetNormalizeHeight()
+        {
+            return _yOffset / _game.Window.Height;
+        }
     }
 }

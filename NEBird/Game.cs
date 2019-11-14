@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FlappyBird.Objects;
 using MLLib.AI.GA;
+using MLLib.AI.OBNN;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
@@ -90,7 +91,8 @@ namespace FlappyBird
                     Resources.Birds[_random.Next(0, Resources.Birds.Length)],
                     Speed,
                     this,
-                    _playerSeed)));
+                    _playerSeed,
+                    null)));
         }
 
         public void Reset()
@@ -114,8 +116,13 @@ namespace FlappyBird
             GL.BlendEquation(BlendEquationMode.FuncAdd);
 
             var birds = new List<Player>();
-            for(var i = 0; i < 5; i++)
-                birds.Add(new Player(Resources.Birds[0], Speed, this, _playerSeed));
+            for (var i = 0; i < 5; i++)
+            {
+                var nn = new NeuralNetwork(new[] {3, 5, 5, 1});
+                nn.FillGaussianRandom();
+
+                birds.Add(new Player(Resources.Birds[0], Speed, this, _playerSeed, nn));
+            }
 
             foreach (var bird in birds)
             {

@@ -42,5 +42,10 @@ namespace FlappyBird.Objects
             return player.Rectangle.Bottom >= _game.Window.Height * GroundY ||
                    player.Rectangle.Top < 0;
         }
+
+        public double GetNormalizedHeight(Player player)
+        {
+            return (_game.Window.Height * GroundY - player.Rectangle.Bottom) / _game.Window.Height * GroundY;
+        }
     }
 }
