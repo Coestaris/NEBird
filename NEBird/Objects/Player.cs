@@ -20,7 +20,8 @@ namespace FlappyBird.Objects
 
     public class Player : DrawableObject, ICreature
     {
-        public static Random Random;
+        public Random Random;
+        public static int RandomSeed = 1;
 
         public RectangleF Rectangle;
         public double Rotation;
@@ -38,10 +39,11 @@ namespace FlappyBird.Objects
         private Ground _localGround;
         private List<Pipe> _localPipes;
         private Game _game;
+        private Pipe _nearestPipe;
 
         private readonly Vector2 _startPos = new Vector2(200, 400);
 
-        public const int PipeFreq = 120;
+        public const int PipeFreq = 100;
         public const int SaveState = 1;
 
         private const double StartRot = 45;
@@ -56,7 +58,7 @@ namespace FlappyBird.Objects
         private const double FlapYVel   =   7;
         private const double FLapRotVel =  -6;
 
-        private const double RotAcc     =  .6;
+        private const double RotAcc     = 1.1;
         private const double RotMax     =  35;
         private const int AnimationSpeed =  4;
 
@@ -64,6 +66,8 @@ namespace FlappyBird.Objects
 
         public Player(Texture[] playerTextures, double speed, Game game, NeuralNetwork neuralNetwork) : base(Vector2.Zero)
         {
+            Random = new Random(RandomSeed);
+
             _game = game;
             _localGround = new Ground(null, speed, game);
             _localPipes = new List<Pipe>();
@@ -73,6 +77,7 @@ namespace FlappyBird.Objects
             _speed = speed;
             NeuralNetwork = neuralNetwork;
 
+            Flap();
             Reset();
         }
 
@@ -98,7 +103,7 @@ namespace FlappyBird.Objects
 
         public void Reset()
         {
-            Random = new Random(1);
+            Random = new Random(RandomSeed);
 
             _localPipes.Clear();
             Position = _startPos;
@@ -124,20 +129,23 @@ namespace FlappyBird.Objects
                     _game.Resources.Pipes[0],
                     -_speed,
                     new Vector2(_game.Window.Width + _game.Resources.Pipes[0].Size.Width, 0),
-                    _game));
+                    _game,
+                    Random,
+                    _localPipes.Count == 0));
             }
 
             foreach (var pipe in _localPipes)
                 pipe.ManualUpdate();
 
             //== THINKING ==
-            var nearestPipe = _localPipes
-                .OrderByDescending(p => p.GetNormalizedDistance(this))
-                .ToList()[0];
+            var nearestPipe = _localPipes.Last();
+            var prevPipe = _localPipes.Count == 1 ? null : _localPipes[_localPipes.Count - 2];
+            _nearestPipe = nearestPipe;
 
             var input = new[]
             {
                 nearestPipe.GetNormalizedDistance(this),
+                prevPipe?.GetNormalizedDistance(this) ?? 0,
                 _localGround.GetNormalizedHeight(this),
                 nearestPipe.GetNormalizeHeight()
             };
@@ -186,7 +194,10 @@ namespace FlappyBird.Objects
 
         public double GetFitness()
         {
-            return _fitness;
+            var center = (_nearestPipe.Rectangle1.Bottom + _nearestPipe.Rectangle2.Top) / 2;
+            var y = Position.Y + _playerTextures[0].Size.Width / 2.0;
+
+            return _fitness + (_game.Window.Height + (y > center ? center - y : y - center)) / 100;
         }
 
         public ICreature CreatureChild()

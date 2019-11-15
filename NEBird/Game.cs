@@ -22,6 +22,7 @@ namespace FlappyBird
 
         private List<State[]> _states;
         private int _stateCounter = 0;
+        private int _generation = 0;
 
         public const double Speed = 1.8;
         public const double MutationRate = .2;
@@ -30,16 +31,14 @@ namespace FlappyBird
 
         public Game(Window window, Resources resources) : base(window)
         {
-            Random = new Random(1);
-
             Resources = resources;
             Resources.RegisterTextures(ResourceManager);
             _pipes = new List<Pipe>();
             _dummyPlayers = new List<Player>();
 
-            CreaturePopulation = new Population(1000, j =>
+            CreaturePopulation = new Population(150, j =>
             {
-                var nn = new NeuralNetwork(new[] {3, 5, 5, 1});
+                var nn = new NeuralNetwork(new[] {4, 3, 3, 1});
                 nn.FillGaussianRandom();
                 var bird = new Player(Resources.Birds[0], Speed, this, nn);
                 return NeuroEvolution.NNToGenome(nn, bird);
@@ -56,7 +55,9 @@ namespace FlappyBird
                         Resources.Pipes[0],
                         - Speed,
                         new Vector2(Window.Width + Resources.Pipes[0].Size.Width, 0),
-                        this)));
+                        this,
+                        Random,
+                        _stateCounter == 0)));
                 }
 
                 foreach (var pipe in _pipes)
@@ -66,10 +67,8 @@ namespace FlappyBird
                 if (stateIndex >= _states.Max(p => p.Length))
                 {
                     Reset();
-                    Console.WriteLine("State ended");
                     return;
                 }
-
 
                 for (var i = 0; i < _states.Count; i++)
                 {
@@ -86,18 +85,44 @@ namespace FlappyBird
 
                 }
 
-                Console.WriteLine(_states.OrderByDescending(p => p.Length).ToList()[0][stateIndex].Inputs[0]);
-
+                 //Console.WriteLine(_states.OrderByDescending(p => p.Length).ToList()[0][stateIndex].Inputs[0]);
                 _stateCounter++;
             }
             else
             {
                 Reset();
-                CreaturePopulation.Selection(false);
-                CreaturePopulation.Crossover(CrossoverAlgorithm.Blend);
-                CreaturePopulation.Mutate(MutationRate);
+                List<object> states = null;
+                var av = 0.0;
+                var start = DateTime.Now;
+                Genome best = null;
+                for (var i = 0; i < 10; i++)
+                {
+                    Player.RandomSeed++;
+                    CreaturePopulation.MultiThreadEvaluateFitness(16);
+                    //CreaturePopulation.EvaluateFitness();
 
-                RunState(CreaturePopulation.GetStates().Select(p => (State[]) p).ToList());
+                    av = CreaturePopulation.AverageFitness();
+                    states = CreaturePopulation.GetStates();
+                    best = CreaturePopulation.BestCreature(false);
+
+                    _generation++;
+
+                    CreaturePopulation.Selection(false, 10);
+                    CreaturePopulation.Crossover(CrossoverAlgorithm.Blend);
+                    CreaturePopulation.Mutate(2);
+                }
+
+                Console.WriteLine("Generation: {0}. Done in: {1}ms. Av fitness: {2:F5}. Best: {3} ({4})",
+                    _generation,
+                    (DateTime.Now - start).TotalMilliseconds,
+                    av,
+                    best.Fitness,
+                    ((State[])states.OrderByDescending(p => ((State[])p).Length).ToArray()[0]).Length);
+
+                if(states == null)
+                    throw new Exception();
+
+                RunState(states.Select(p => (State[]) p).ToList());
             }
         }
 
@@ -117,7 +142,7 @@ namespace FlappyBird
 
         public void Reset()
         {
-            Player.Random = new Random(1);
+            Random = new Random(Player.RandomSeed);
 
             _states = null;
             foreach (var pipe in _pipes)

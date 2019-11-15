@@ -14,19 +14,20 @@ namespace FlappyBird.Objects
         private double _x;
         private double _yOffset;
 
-        private const float PipeWidth = 60;
+        private const float PipeWidth = 90;
         private Game _game;
 
         public RectangleF Rectangle1;
         public RectangleF Rectangle2;
 
-        public Pipe(Texture texture, double speed, Vector2 position, Game game) : base(position)
+        public Pipe(Texture texture, double speed, Vector2 position, Game game, Random random, bool first) : base(position)
         {
             _texture = texture;
             _speed = speed;
             _game = game;
 
-            _yOffset = Player.Random.Next(-10, 140);
+            //_yOffset = 0;
+            _yOffset = random.Next(-90, 200);
             _x = position.X;
         }
 
@@ -102,12 +103,12 @@ namespace FlappyBird.Objects
 
         public double GetNormalizedDistance(Player player)
         {
-            return (Rectangle1.Right - player.Rectangle.Right) / _game.Window.Width;
+            return (Rectangle1.Left - player.Rectangle.Right) / _game.Window.Width;
         }
 
         public double GetNormalizeHeight()
         {
-            return _yOffset / PipeWidth;
+            return _yOffset / _game.Window.Height;
         }
     }
 }
