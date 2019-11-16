@@ -38,7 +38,7 @@ namespace FlappyBird
 
             CreaturePopulation = new Population(150, j =>
             {
-                var nn = new NeuralNetwork(new[] {4, 3, 3, 1});
+                var nn = new NeuralNetwork(new[] {3, 6, 1});
                 nn.FillGaussianRandom();
                 var bird = new Player(Resources.Birds[0], Speed, this, nn);
                 return NeuroEvolution.NNToGenome(nn, bird);
@@ -51,7 +51,7 @@ namespace FlappyBird
             {
                 if (_stateCounter % Player.PipeFreq == 0)
                 {
-                    _pipes.Add((Pipe)AddObject(new Pipe(
+                    _pipes.Add((Pipe)InsertObject(1, new Pipe(
                         Resources.Pipes[0],
                         - Speed,
                         new Vector2(Window.Width + Resources.Pipes[0].Size.Width, 0),
@@ -84,8 +84,6 @@ namespace FlappyBird
                         (float) _states[i][stateIndex].Y);
 
                 }
-
-                 //Console.WriteLine(_states.OrderByDescending(p => p.Length).ToList()[0][stateIndex].Inputs[0]);
                 _stateCounter++;
             }
             else
@@ -95,13 +93,15 @@ namespace FlappyBird
                 var av = 0.0;
                 var start = DateTime.Now;
                 Genome best = null;
-                for (var i = 0; i < 10; i++)
+                const int count = 5;
+
+                for (var i = 0; i < count; i++)
                 {
                     Player.RandomSeed++;
                     CreaturePopulation.MultiThreadEvaluateFitness(16);
                     //CreaturePopulation.EvaluateFitness();
 
-                    av = CreaturePopulation.AverageFitness();
+                    av += CreaturePopulation.AverageFitness();
                     states = CreaturePopulation.GetStates();
                     best = CreaturePopulation.BestCreature(false);
 
@@ -115,7 +115,7 @@ namespace FlappyBird
                 Console.WriteLine("Generation: {0}. Done in: {1}ms. Av fitness: {2:F5}. Best: {3} ({4})",
                     _generation,
                     (DateTime.Now - start).TotalMilliseconds,
-                    av,
+                    av / count,
                     best.Fitness,
                     ((State[])states.OrderByDescending(p => ((State[])p).Length).ToArray()[0]).Length);
 
@@ -130,14 +130,14 @@ namespace FlappyBird
         {
             Reset();
             _states = states;
-            AddObject(new Background(Resources.Backgrounds[0], -Speed));
-            AddObject(new Ground(Resources.Base, -Speed, this));
             for (var i = 0; i < states.Count; i++)
-                _dummyPlayers.Add((Player)AddObject(new Player(
-                    Resources.Birds[0],
+                _dummyPlayers.Add((Player) AddObject(new Player(
+                    Resources.Birds[Random.Next(0, Resources.Birds.Length)],
                     Speed,
                     this,
                     null)));
+
+            Random = new Random(Player.RandomSeed);
         }
 
         public void Reset()
@@ -163,6 +163,8 @@ namespace FlappyBird
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.BlendEquation(BlendEquationMode.FuncAdd);
 
+            AddObject(new Background(Resources.Backgrounds[0], -Speed));
+            AddObject(new Ground(Resources.Base, -Speed, this));
 
             base.OnStart();
         }

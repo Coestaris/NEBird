@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using MLLib.AI.GA;
 using MLLib.AI.OBNN;
 using OpenTK;
@@ -13,6 +14,7 @@ namespace FlappyBird.Objects
     {
         public double X, Y;
         public double Angle;
+        public int TextureCounter;
 
         public double[] Inputs;
         public double Fitness;
@@ -43,7 +45,7 @@ namespace FlappyBird.Objects
 
         private readonly Vector2 _startPos = new Vector2(200, 400);
 
-        public const int PipeFreq = 100;
+        public const int PipeFreq = 120;
         public const int SaveState = 1;
 
         private const double StartRot = 45;
@@ -120,6 +122,7 @@ namespace FlappyBird.Objects
             return _state.ToArray();
         }
 
+        private bool _lastFlap = false;
         public bool Step(int time)
         {
             //== CREATING PIPE ==
@@ -138,26 +141,50 @@ namespace FlappyBird.Objects
                 pipe.ManualUpdate();
 
             //== THINKING ==
-            var nearestPipe = _localPipes.Last();
-            var prevPipe = _localPipes.Count == 1 ? null : _localPipes[_localPipes.Count - 2];
+            var pipeLast = _localPipes[_localPipes.Count - 1];
+            Pipe nearestPipe = null;
+
+            if (_localPipes.Count != 1)
+            {
+                var pipePrev = _localPipes[_localPipes.Count - 2];
+                nearestPipe = pipeLast.Rectangle1.Right - Position.X + Rectangle.Width / 2.0 < PipeFreq * _speed ? pipeLast : pipePrev;
+            }
+            else nearestPipe = pipeLast;
             _nearestPipe = nearestPipe;
+
+            var y1  = nearestPipe.Rectangle1.Bottom;
+            var dx1 = Position.X - nearestPipe.Rectangle1.X + nearestPipe.Rectangle1.Width / 2;
+
+            var y2  = nearestPipe.Rectangle2.Top;
+            var dx2 = Position.X - nearestPipe.Rectangle2.X + nearestPipe.Rectangle2.Width / 2;
 
             var input = new[]
             {
-                nearestPipe.GetNormalizedDistance(this),
-                prevPipe?.GetNormalizedDistance(this) ?? 0,
-                _localGround.GetNormalizedHeight(this),
-                nearestPipe.GetNormalizeHeight()
+                Math.Sqrt(dx1 * dx1 + (Position.Y - y1) * (Position.Y - y1)),
+                Math.Sqrt(dx2 * dx2 + (Position.Y - y2) * (Position.Y - y2)),
+                _lastFlap == true ? 1 : 0,
             };
 
             var output = NeuralNetwork.ForwardPass(input);
-            if(output[0] > .5)
-                Flap();
+            if (output[0] > .5)
+            {
+                if (!_lastFlap)
+                {
+                    Flap();
+                    _lastFlap = true;
+                }
+            }
+            else _lastFlap = false;
+
+            if (time % AnimationSpeed == 0)
+                _textureCounter = (_textureCounter + 1) % _playerTextures.Length;
 
             //== PROCESSING POSITION AND ROTATION ==
             if (_yVel > MaxYVel && !_flapped)
                 _yVel += YAcc;
             Position.Y -= (float)_yVel;
+            if (_fitness > 10000) return false;
+
             if (Rotation < RotMax)
             {
                 _rotVel += RotAcc;
@@ -177,7 +204,8 @@ namespace FlappyBird.Objects
                 {
                     Angle = Rotation, X = Position.X, Y = Position.Y,
                     Inputs = input,
-                    Fitness = _fitness
+                    Fitness = _fitness,
+                    TextureCounter = _textureCounter
                 });
 
             //== CHECKING COLLISIONS ==
