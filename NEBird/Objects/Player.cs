@@ -27,13 +27,13 @@ namespace FlappyBird.Objects
 
         public RectangleF Rectangle;
         public double Rotation;
+        public int TextureCounter;
 
         private Texture[] _playerTextures;
         private List<State> _state;
 
         private double _fitness;
         private double _speed;
-        private int _textureCounter;
         private int _randomSeed;
         private double _rotVel;
         private double _yVel;
@@ -88,7 +88,7 @@ namespace FlappyBird.Objects
         public override void Draw()
         {
             DrawTexture(
-                _playerTextures[_textureCounter],
+                _playerTextures[TextureCounter],
                 Position.X,
                 Position.Y,
                 1,
@@ -162,7 +162,7 @@ namespace FlappyBird.Objects
             {
                 Math.Sqrt(dx1 * dx1 + (Position.Y - y1) * (Position.Y - y1)),
                 Math.Sqrt(dx2 * dx2 + (Position.Y - y2) * (Position.Y - y2)),
-                _lastFlap == true ? 1 : 0,
+                _lastFlap ? 1 : 0
             };
 
             var output = NeuralNetwork.ForwardPass(input);
@@ -177,13 +177,13 @@ namespace FlappyBird.Objects
             else _lastFlap = false;
 
             if (time % AnimationSpeed == 0)
-                _textureCounter = (_textureCounter + 1) % _playerTextures.Length;
+                TextureCounter = (TextureCounter + 1) % _playerTextures.Length;
 
             //== PROCESSING POSITION AND ROTATION ==
             if (_yVel > MaxYVel && !_flapped)
                 _yVel += YAcc;
             Position.Y -= (float)_yVel;
-            if (_fitness > 10000) return false;
+            if (_fitness > Game.BestFitness) return false;
 
             if (Rotation < RotMax)
             {
@@ -205,7 +205,7 @@ namespace FlappyBird.Objects
                     Angle = Rotation, X = Position.X, Y = Position.Y,
                     Inputs = input,
                     Fitness = _fitness,
-                    TextureCounter = _textureCounter
+                    TextureCounter = TextureCounter
                 });
 
             //== CHECKING COLLISIONS ==

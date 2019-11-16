@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using FlappyBird.Objects;
 using MLLib.AI.GA;
@@ -13,21 +14,26 @@ namespace FlappyBird
 {
     public class Game : WindowHandler
     {
-        private int _playerSeed;
         public Resources Resources;
-        public Random Random;
 
+        private int _playerSeed;
+        private Random _random;
+        private Population _creaturePopulation;
         private List<Player> _dummyPlayers;
         private List<Pipe> _pipes;
-
         private List<State[]> _states;
-        private int _stateCounter = 0;
-        private int _generation = 0;
+        private int _stateCounter;
+        private int _generation;
+        private StringRenderer _renderer;
+        private InfoRenderer _infoRenderer;
 
-        public const double Speed = 1.8;
-        public const double MutationRate = .2;
-
-        private Population CreaturePopulation;
+        private const double Speed = 1.8;
+        private const double MutationRate = 2;
+        private const int SelectionTakeRate = 10;
+        private const int PopulationCount = 50;
+        private readonly int[] NeuralNetworkTopology = {3, 4, 1};
+        private const int SkipGenerations = 10;
+        public const double BestFitness = 5000;
 
         public Game(Window window, Resources resources) : base(window)
         {
@@ -36,9 +42,14 @@ namespace FlappyBird
             _pipes = new List<Pipe>();
             _dummyPlayers = new List<Player>();
 
-            CreaturePopulation = new Population(150, j =>
+            ResourceManager.PushRenderer(_renderer = new StringRenderer(
+                StringRenderer.FullCharSet,
+                new Font("DejaVu Sans Mono", 12),
+                Brushes.Indigo));
+
+            _creaturePopulation = new Population(PopulationCount, j =>
             {
-                var nn = new NeuralNetwork(new[] {3, 6, 1});
+                var nn = new NeuralNetwork(NeuralNetworkTopology);
                 nn.FillGaussianRandom();
                 var bird = new Player(Resources.Birds[0], Speed, this, nn);
                 return NeuroEvolution.NNToGenome(nn, bird);
@@ -56,7 +67,7 @@ namespace FlappyBird
                         - Speed,
                         new Vector2(Window.Width + Resources.Pipes[0].Size.Width, 0),
                         this,
-                        Random,
+                        _random,
                         _stateCounter == 0)));
                 }
 
@@ -79,11 +90,14 @@ namespace FlappyBird
                     }
 
                     _dummyPlayers[i].Rotation = _states[i][stateIndex].Angle;
+                    _dummyPlayers[i].TextureCounter = _states[i][stateIndex].TextureCounter;
                     _dummyPlayers[i].Position = new Vector2(
                         (float) _states[i][stateIndex].X,
                         (float) _states[i][stateIndex].Y);
 
                 }
+
+                _infoRenderer.GameTick = stateIndex;
                 _stateCounter++;
             }
             else
@@ -93,34 +107,34 @@ namespace FlappyBird
                 var av = 0.0;
                 var start = DateTime.Now;
                 Genome best = null;
-                const int count = 5;
-
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < SkipGenerations; i++)
                 {
                     Player.RandomSeed++;
-                    CreaturePopulation.MultiThreadEvaluateFitness(16);
-                    //CreaturePopulation.EvaluateFitness();
+                    _creaturePopulation.MultiThreadEvaluateFitness(16);
 
-                    av += CreaturePopulation.AverageFitness();
-                    states = CreaturePopulation.GetStates();
-                    best = CreaturePopulation.BestCreature(false);
+                    av += _creaturePopulation.AverageFitness();
+                    states = _creaturePopulation.GetStates();
+                    best = _creaturePopulation.BestCreature(false);
 
                     _generation++;
 
-                    CreaturePopulation.Selection(false, 10);
-                    CreaturePopulation.Crossover(CrossoverAlgorithm.Blend);
-                    CreaturePopulation.Mutate(2);
+                    _creaturePopulation.Selection(false, SelectionTakeRate);
+                    _creaturePopulation.Crossover(CrossoverAlgorithm.Blend);
+                    _creaturePopulation.Mutate(MutationRate);
                 }
 
+                var bestStates = ((State[]) states.OrderByDescending(p => ((State[]) p).Length).ToArray()[0]);
                 Console.WriteLine("Generation: {0}. Done in: {1}ms. Av fitness: {2:F5}. Best: {3} ({4})",
                     _generation,
                     (DateTime.Now - start).TotalMilliseconds,
-                    av / count,
+                    av / SkipGenerations,
                     best.Fitness,
-                    ((State[])states.OrderByDescending(p => ((State[])p).Length).ToArray()[0]).Length);
+                    bestStates.Length);
 
-                if(states == null)
-                    throw new Exception();
+                _infoRenderer.AverageFitness = av / SkipGenerations;
+                _infoRenderer.BestFitness = best.Fitness;
+                _infoRenderer.Generation = _generation;
+                _infoRenderer.Values = bestStates.Select(p => p.Inputs).ToArray();
 
                 RunState(states.Select(p => (State[]) p).ToList());
             }
@@ -132,17 +146,17 @@ namespace FlappyBird
             _states = states;
             for (var i = 0; i < states.Count; i++)
                 _dummyPlayers.Add((Player) AddObject(new Player(
-                    Resources.Birds[Random.Next(0, Resources.Birds.Length)],
+                    Resources.Birds[_random.Next(0, Resources.Birds.Length)],
                     Speed,
                     this,
                     null)));
 
-            Random = new Random(Player.RandomSeed);
+            _random = new Random(Player.RandomSeed);
         }
 
         public void Reset()
         {
-            Random = new Random(Player.RandomSeed);
+            _random = new Random(Player.RandomSeed);
 
             _states = null;
             foreach (var pipe in _pipes)
@@ -165,6 +179,7 @@ namespace FlappyBird
 
             AddObject(new Background(Resources.Backgrounds[0], -Speed));
             AddObject(new Ground(Resources.Base, -Speed, this));
+            AddObject(_infoRenderer = new InfoRenderer(_renderer, this));
 
             base.OnStart();
         }

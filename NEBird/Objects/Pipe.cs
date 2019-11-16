@@ -14,7 +14,7 @@ namespace FlappyBird.Objects
         private double _x;
         private double _yOffset;
 
-        private const float PipeWidth = 45;
+        private const float PipeWidth = 40;
         private Game _game;
 
         public RectangleF Rectangle1;

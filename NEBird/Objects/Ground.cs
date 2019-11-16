@@ -13,7 +13,7 @@ namespace FlappyBird.Objects
         private int _groundOffset;
         private Game _game;
 
-        private const double GroundY = 0.85;
+        public const double GroundY = 0.85;
 
         public Ground(Texture groundTexture, double speed, Game game) : base(Vector2.Zero)
         {
