@@ -16,6 +16,8 @@ namespace FlappyBird
 
         public Dictionary<int, Texture> FontTextures;
         public Texture Base;
+        public Texture Button;
+        public Texture ButtonActive;
         public Texture Gameover;
         public Texture Neuron;
         public Texture Tutorial;
@@ -156,6 +158,8 @@ namespace FlappyBird
             Gameover = new Texture(LoadBitmap("gameover.png"));
             Tutorial = new Texture(LoadBitmap("message.png"));
             Neuron = new Texture(LoadBitmap("neuron.png"));
+            Button = new Texture(LoadBitmap("button.png"));
+            ButtonActive = new Texture(LoadBitmap("buttonActive.png"));
 
             Pipes = new[]
             {
@@ -202,6 +206,8 @@ namespace FlappyBird
             manager.PushTexture(Gameover.ID, Gameover);
             manager.PushTexture(Base.ID, Base);
             manager.PushTexture(Neuron.ID, Neuron);
+            manager.PushTexture(Button.ID, Button);
+            manager.PushTexture(ButtonActive.ID, ButtonActive);
         }
     }
 }

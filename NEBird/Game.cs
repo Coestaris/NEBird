@@ -19,6 +19,9 @@ namespace FlappyBird
         public Resources Resources;
         public LearningState LearningState;
         public PlayState PlayState;
+        public SelectState SelectState;
+
+        private int _selectedState;
 
         public Game(Window window, Resources resources) : base(window)
         {
@@ -27,12 +30,23 @@ namespace FlappyBird
 
             LearningState = new LearningState(this);
             PlayState = new PlayState(this);
+            SelectState = new SelectState(this);
         }
 
         protected override void OnUpdate()
         {
-            //LearningState.Update();
-            PlayState.Update();
+            if (_selectedState == 1) PlayState.Update();
+            else if(_selectedState == 2) LearningState.Update();
+            else
+            {
+                var selected = SelectState.Update();
+                if (selected != 0)
+                {
+                    _selectedState = selected;
+                    if (selected == 1) PlayState.Reset();
+                    else LearningState.Reset();
+                }
+            }
         }
 
         protected override void OnStart()
@@ -42,8 +56,7 @@ namespace FlappyBird
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.BlendEquation(BlendEquationMode.FuncAdd);
 
-            //LearningState.Reset();
-            PlayState.Reset();
+            SelectState.Reset();
             base.OnStart();
         }
     }

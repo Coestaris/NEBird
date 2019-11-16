@@ -8,6 +8,7 @@ namespace FlappyBird.Objects
     public class Background : DrawableObject
     {
         private Texture _backgroundTexture;
+        public bool Freezed;
 
         private double _speed;
         private double _bx = 0;
@@ -23,8 +24,11 @@ namespace FlappyBird.Objects
 
         public override void Update()
         {
-            _bx += _speed * BackgroundSpeed;
-            _backgroundOffset = (int)(Math.Ceiling(_bx / _backgroundTexture.Size.Width));
+            if (!Freezed)
+            {
+                _bx += _speed * BackgroundSpeed;
+                _backgroundOffset = (int) (Math.Ceiling(_bx / _backgroundTexture.Size.Width));
+            }
         }
 
         public override void Draw()

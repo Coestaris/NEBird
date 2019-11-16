@@ -36,6 +36,7 @@
     <Compile Include="Game.cs" />
     <Compile Include="GameStates\LearningState.cs" />
     <Compile Include="GameStates\PlayState.cs" />
+    <Compile Include="GameStates\SelectState.cs" />
     <Compile Include="Objects\Background.cs" />
     <Compile Include="Objects\Counter.cs" />
     <Compile Include="Objects\Ground.cs" />
@@ -43,6 +44,7 @@
     <Compile Include="Objects\NeuralNetworkDrawer.cs" />
     <Compile Include="Objects\Pipe.cs" />
     <Compile Include="Objects\Player.cs" />
+    <Compile Include="Objects\StateDrawer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources.cs" />

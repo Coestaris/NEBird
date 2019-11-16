@@ -8,6 +8,7 @@ namespace FlappyBird.Objects
     {
         private Texture _groundTexture;
         private double _speed;
+        public bool Freezed;
 
         private double _x = 0;
         private int _groundOffset;
@@ -24,8 +25,11 @@ namespace FlappyBird.Objects
 
         public override void Update()
         {
-            _x += _speed;
-            _groundOffset = (int)(Math.Ceiling(_x / _groundTexture.Size.Width));
+            if (!Freezed)
+            {
+                _x += _speed;
+                _groundOffset = (int) (Math.Ceiling(_x / _groundTexture.Size.Width));
+            }
         }
 
         public override void Draw()

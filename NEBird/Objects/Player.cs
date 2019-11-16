@@ -29,6 +29,7 @@ namespace FlappyBird.Objects
         public RectangleF Rectangle;
         public double Rotation;
         public int TextureCounter;
+        public bool Freezed;
 
         private bool _lastFlap;
         private Texture[] _playerTextures;
@@ -92,7 +93,7 @@ namespace FlappyBird.Objects
 
         public override void Update()
         {
-            if (Playing)
+            if (Playing && !Freezed)
                 Step(_timeUnit++);
         }
 
