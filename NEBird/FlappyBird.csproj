@@ -34,9 +34,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Game.cs" />
+    <Compile Include="GameStates\LearningState.cs" />
+    <Compile Include="GameStates\PlayState.cs" />
     <Compile Include="Objects\Background.cs" />
+    <Compile Include="Objects\Counter.cs" />
     <Compile Include="Objects\Ground.cs" />
     <Compile Include="Objects\InfoRenderer.cs" />
+    <Compile Include="Objects\NeuralNetworkDrawer.cs" />
     <Compile Include="Objects\Pipe.cs" />
     <Compile Include="Objects\Player.cs" />
     <Compile Include="Program.cs" />

@@ -39,7 +39,7 @@ namespace FlappyBird.Objects
         {
             _textRenderer.DrawString($"Generation: {Generation}", _generationPos);
             _textRenderer.DrawString($"Average Fitness: {AverageFitness:F3}", _averageFitnessPos);
-            _textRenderer.DrawString($"Best Fitness: {BestFitness:F3} {(BestFitness >= Game.BestFitness ? "(max)" : "")}", _bestFitnessPos);
+            _textRenderer.DrawString($"Best Fitness: {BestFitness:F3} {(BestFitness >= LearningState.BestFitness ? "(max)" : "")}", _bestFitnessPos);
 
             _textRenderer.DrawString("Inputs: ", _valuesPos);
             GL.Color3(1, 1, 1);

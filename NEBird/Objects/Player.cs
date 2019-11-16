@@ -24,17 +24,19 @@ namespace FlappyBird.Objects
     {
         public Random Random;
         public static int RandomSeed = 1;
+        public bool Playing;
 
         public RectangleF Rectangle;
         public double Rotation;
         public int TextureCounter;
 
+        private bool _lastFlap;
         private Texture[] _playerTextures;
         private List<State> _state;
+        private int _timeUnit = 0;
 
         private double _fitness;
         private double _speed;
-        private int _randomSeed;
         private double _rotVel;
         private double _yVel;
 
@@ -54,11 +56,11 @@ namespace FlappyBird.Objects
         private bool _flapped = false;
 
         private const double MaxYVel    = -12;
-        private const double YAcc       =  -1;
+        private const double YAcc       = -.8;
 
         private const double MinRotVel  = -40;
-        private const double FlapYVel   =   7;
-        private const double FLapRotVel =  -6;
+        private const double FlapYVel   =   8;
+        private const double FLapRotVel =  -9;
 
         private const double RotAcc     = 1.1;
         private const double RotMax     =  35;
@@ -66,24 +68,33 @@ namespace FlappyBird.Objects
 
         public NeuralNetwork NeuralNetwork;
 
-        public Player(Texture[] playerTextures, double speed, Game game, NeuralNetwork neuralNetwork) : base(Vector2.Zero)
+        public Player(Texture[] playerTextures, double speed, Game game, NeuralNetwork neuralNetwork, bool playing) : base(Vector2.Zero)
         {
-            Random = new Random(RandomSeed);
-
+            Playing = playing;
             _game = game;
-            _localGround = new Ground(null, speed, game);
-            _localPipes = new List<Pipe>();
-
-            _state = new List<State>();
-            _playerTextures = playerTextures;
             _speed = speed;
-            NeuralNetwork = neuralNetwork;
+            _playerTextures = playerTextures;
 
-            Flap();
+            if (!playing)
+            {
+                Random = new Random(RandomSeed);
+                _localGround = new Ground(null, speed, game);
+                _localPipes = new List<Pipe>();
+
+                _state = new List<State>();
+                NeuralNetwork = neuralNetwork;
+            }
+
             Reset();
+            Flap();
         }
 
-        public override void Update() { }
+
+        public override void Update()
+        {
+            if (Playing)
+                Step(_timeUnit++);
+        }
 
         public override void Draw()
         {
@@ -105,13 +116,15 @@ namespace FlappyBird.Objects
 
         public void Reset()
         {
-            Random = new Random(RandomSeed);
+            if (!Playing)
+            {
+                Random = new Random(RandomSeed);
+                _localPipes.Clear();
+                _fitness = 0;
+                _state.Clear();
+            }
 
-            _localPipes.Clear();
             Position = _startPos;
-            _fitness = 0;
-            _state.Clear();
-
             Rotation = StartRot;
             _rotVel = StartRotVel;
             _yVel = StartYVel;
@@ -122,59 +135,65 @@ namespace FlappyBird.Objects
             return _state.ToArray();
         }
 
-        private bool _lastFlap = false;
         public bool Step(int time)
         {
+            double[] input = null;
             //== CREATING PIPE ==
-            if (time % PipeFreq == 0)
+            if (!Playing)
             {
-                _localPipes.Add(new Pipe(
-                    _game.Resources.Pipes[0],
-                    -_speed,
-                    new Vector2(_game.Window.Width + _game.Resources.Pipes[0].Size.Width, 0),
-                    _game,
-                    Random,
-                    _localPipes.Count == 0));
-            }
-
-            foreach (var pipe in _localPipes)
-                pipe.ManualUpdate();
-
-            //== THINKING ==
-            var pipeLast = _localPipes[_localPipes.Count - 1];
-            Pipe nearestPipe = null;
-
-            if (_localPipes.Count != 1)
-            {
-                var pipePrev = _localPipes[_localPipes.Count - 2];
-                nearestPipe = pipeLast.Rectangle1.Right - Position.X + Rectangle.Width / 2.0 < PipeFreq * _speed ? pipeLast : pipePrev;
-            }
-            else nearestPipe = pipeLast;
-            _nearestPipe = nearestPipe;
-
-            var y1  = nearestPipe.Rectangle1.Bottom;
-            var dx1 = Position.X - nearestPipe.Rectangle1.X + nearestPipe.Rectangle1.Width / 2;
-
-            var y2  = nearestPipe.Rectangle2.Top;
-            var dx2 = Position.X - nearestPipe.Rectangle2.X + nearestPipe.Rectangle2.Width / 2;
-
-            var input = new[]
-            {
-                Math.Sqrt(dx1 * dx1 + (Position.Y - y1) * (Position.Y - y1)),
-                Math.Sqrt(dx2 * dx2 + (Position.Y - y2) * (Position.Y - y2)),
-                _lastFlap ? 1 : 0
-            };
-
-            var output = NeuralNetwork.ForwardPass(input);
-            if (output[0] > .5)
-            {
-                if (!_lastFlap)
+                if (time % PipeFreq == 0)
                 {
-                    Flap();
-                    _lastFlap = true;
+                    _localPipes.Add(new Pipe(
+                        _game.Resources.Pipes[0],
+                        -_speed,
+                        new Vector2(_game.Window.Width + _game.Resources.Pipes[0].Size.Width, 0),
+                        _game,
+                        Random,
+                        _localPipes.Count == 0));
                 }
+
+                foreach (var pipe in _localPipes)
+                    pipe.ManualUpdate();
+
+                //== THINKING ==
+                var pipeLast = _localPipes[_localPipes.Count - 1];
+                Pipe nearestPipe = null;
+
+                if (_localPipes.Count != 1)
+                {
+                    var pipePrev = _localPipes[_localPipes.Count - 2];
+                    nearestPipe = pipeLast.Rectangle1.Right - Position.X + Rectangle.Width / 2.0 < PipeFreq * _speed
+                        ? pipeLast
+                        : pipePrev;
+                }
+                else nearestPipe = pipeLast;
+
+                _nearestPipe = nearestPipe;
+
+                var y1 = nearestPipe.Rectangle1.Bottom;
+                var dx1 = Position.X - nearestPipe.Rectangle1.X + nearestPipe.Rectangle1.Width / 2;
+
+                var y2 = nearestPipe.Rectangle2.Top;
+                var dx2 = Position.X - nearestPipe.Rectangle2.X + nearestPipe.Rectangle2.Width / 2;
+
+                input = new[]
+                {
+                    Math.Sqrt(dx1 * dx1 + (Position.Y - y1) * (Position.Y - y1)),
+                    Math.Sqrt(dx2 * dx2 + (Position.Y - y2) * (Position.Y - y2)),
+                    _lastFlap ? 1 : 0
+                };
+
+                var output = NeuralNetwork.ForwardPass(input);
+                if (output[0] > .5)
+                {
+                    if (!_lastFlap)
+                    {
+                        Flap();
+                        _lastFlap = true;
+                    }
+                }
+                else _lastFlap = false;
             }
-            else _lastFlap = false;
 
             if (time % AnimationSpeed == 0)
                 TextureCounter = (TextureCounter + 1) % _playerTextures.Length;
@@ -183,7 +202,7 @@ namespace FlappyBird.Objects
             if (_yVel > MaxYVel && !_flapped)
                 _yVel += YAcc;
             Position.Y -= (float)_yVel;
-            if (_fitness > Game.BestFitness) return false;
+            if (_fitness > LearningState.BestFitness) return false;
 
             if (Rotation < RotMax)
             {
@@ -196,28 +215,34 @@ namespace FlappyBird.Objects
                     Position.X - _playerTextures[0].Size.Width / 2.0f,
                     Position.Y - _playerTextures[0].Size.Height / 2.0f),
                 _playerTextures[0].Size);
-            _fitness += _speed;
 
             //== SAVING STATE ==
-            if (time % SaveState == 0)
-                _state.Add(new State
-                {
-                    Angle = Rotation, X = Position.X, Y = Position.Y,
-                    Inputs = input,
-                    Fitness = _fitness,
-                    TextureCounter = TextureCounter
-                });
+            if (!Playing)
+            {
+                _fitness += _speed;
+                if (time % SaveState == 0)
+                    _state.Add(new State
+                    {
+                        Angle = Rotation, X = Position.X, Y = Position.Y,
+                        Inputs = input,
+                        Fitness = _fitness,
+                        TextureCounter = TextureCounter
+                    });
 
-            //== CHECKING COLLISIONS ==
-            var collided = false;
-            foreach (var pipe in _localPipes)
-                if (pipe.CheckCollision(this))
-                {
-                    collided = true;
-                    break;
-                }
-            collided |= _localGround.CheckCollision(this);
-            return !collided;
+                //== CHECKING COLLISIONS ==
+                var collided = false;
+                foreach (var pipe in _localPipes)
+                    if (pipe.CheckCollision(this))
+                    {
+                        collided = true;
+                        break;
+                    }
+
+                collided |= _localGround.CheckCollision(this);
+                return !collided;
+            }
+
+            return true;
         }
 
         public double GetFitness()
@@ -230,7 +255,7 @@ namespace FlappyBird.Objects
 
         public ICreature CreatureChild()
         {
-            return new Player(_playerTextures, _speed, _game, (NeuralNetwork)NeuralNetwork.Clone());
+            return new Player(_playerTextures, _speed, _game, (NeuralNetwork)NeuralNetwork.Clone(), false);
         }
 
         public void Update(Genome genome)
