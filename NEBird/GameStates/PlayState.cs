@@ -32,6 +32,36 @@ namespace FlappyBird
             _game = game;
         }
 
+        private void ClickDown()
+        {
+            if (!_playing)
+            {
+                if (_stateDrawer.State == 1)
+                {
+                    _lastDie = true;
+                    Reset();
+                    return;
+                }
+
+                _player.Reset();
+                _playing = true;
+
+                _background.Freezed = false;
+                _ground.Freezed = false;
+                _player.Freezed = false;
+                _stateDrawer.State = 2;
+            }
+
+            if (_lastFlap)
+                _player.Flap();
+            _lastFlap = false;
+        }
+
+        private void ClickUp()
+        {
+            _lastFlap = true;
+        }
+
         public void Reset()
         {
             _pipes = new List<Pipe>();
@@ -44,31 +74,11 @@ namespace FlappyBird
 
             if (_game.Window.KeyDownBinds.Count == 0)
             {
-                _game.Window.KeyUpBinds.Add(Key.Space, () => _lastFlap = true);
-                _game.Window.KeyDownBinds.Add(Key.Space, () =>
-                {
-                    if (!_playing)
-                    {
-                        if (_stateDrawer.State == 1)
-                        {
-                            _lastDie = true;
-                            Reset();
-                            return;
-                        }
+                _game.Window.KeyUpBinds.Add(Key.Space, ClickUp);
+                _game.Window.KeyDownBinds.Add(Key.Space, ClickDown);
+                _game.Window.MouseUpBind.Add(MouseButton.Left, ClickUp);
+                _game.Window.MouseDownBind.Add(MouseButton.Left, ClickDown);
 
-                        _player.Reset();
-                        _playing = true;
-
-                        _background.Freezed = false;
-                        _ground.Freezed = false;
-                        _player.Freezed = false;
-                        _stateDrawer.State = 2;
-                    }
-
-                    if (_lastFlap)
-                        _player.Flap();
-                    _lastFlap = false;
-                });
             }
 
             _pipeIndex = _random.Next(0, 2);
