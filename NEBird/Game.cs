@@ -1,13 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using FlappyBird.Objects;
-using MLLib.AI.GA;
-using MLLib.AI.OBNN;
-using OpenTK;
 using OpenTK.Graphics.OpenGL;
-using OpenTK.Input;
 using MLLib.WindowHandler;
 
 namespace FlappyBird

@@ -78,7 +78,6 @@ namespace FlappyBird
                 _game.Window.KeyDownBinds.Add(Key.Space, ClickDown);
                 _game.Window.MouseUpBind.Add(MouseButton.Left, ClickUp);
                 _game.Window.MouseDownBind.Add(MouseButton.Left, ClickDown);
-
             }
 
             _pipeIndex = _random.Next(0, 2);

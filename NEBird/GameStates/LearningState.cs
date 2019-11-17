@@ -30,7 +30,7 @@ namespace FlappyBird
         private const double MutationRate = 2;
         private const int SelectionTakeRate = 10;
         private const int PopulationCount = 50;
-        private readonly int[] NeuralNetworkTopology = {3, 1};
+        private readonly int[] NeuralNetworkTopology = {3, 4, 1};
         private const int SkipGenerations = 10;
         public const double BestFitness = 5000;
 
